@@ -257,7 +257,7 @@ function combineTwoArraysOfSameLengthIntoStringsWithSeparator(array1, array2, se
     result.push(array1[index] + separator + array2[index]);
   }
   
-  return result;
+  return result;xz
 }
 
 function getElementsUpToStringifiedLength(array, maxLength, joiner = "\n") {
