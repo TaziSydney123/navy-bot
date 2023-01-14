@@ -52,7 +52,7 @@ module.exports = {
     let roleChanges = interaction.client.roleUpdates.get(member.id);
     if (roleChanges) {
       roleChanges = await Promise.all(roleChanges.map(async update => (update.change == "add" ? "Added role " : "Removed role ") +
-        interaction.guild.roles.cache.get(update.role).name +
+        (!interaction.guild.roles.cache.get(update.role) ? "*Unknown Role*" : interaction.guild.roles.cache.get(update.role).name) +
         (update.change == "add" ? " to " : " from ") +
         (await interaction.guild.members.fetch(update.memberId)).displayName +
         " (" +

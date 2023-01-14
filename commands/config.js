@@ -41,7 +41,7 @@ module.exports = {
     await interaction.followUp({
       content: bold(underscore("Bot Configuration")) + "\n" +
         "Ship Options: " + "Set the ship options for the /check_squads command\n" +
-        "Important Channels: " + "Set the important channels for the bot, such as the voyage logbook channel\n" +
+        "Channels: " + "Set the important channels for the bot, such as the voyage logbook channel\n" +
         "Voyage Permissions Role: " + "Set the name of the role used to indicate voyage permissions",
       components: [selectSettingRow]
     });

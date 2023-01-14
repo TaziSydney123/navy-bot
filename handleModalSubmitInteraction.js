@@ -14,22 +14,32 @@ const logger = require("./logger")
 
 const SUBORDINATE_COMMAND_SUITE_ID = process.env.SUBORDINATE_COMMAND_SUITE_ID;
 
-const getSubordinatesReclaimMessage = (personal = true, setActing = false) => {
-  return setActing ?
-    `You may not set someone as acting for ${personal ? "yourself" : "someone"} while someone is acting for you already. First run ${chatInputApplicationCommandMention("subordinates reclaim", SUBORDINATE_COMMAND_SUITE_ID)}.`
-    : `You may not modify ${personal ? "your" : "someones"} subordinates while someone is acting for you. First run ${chatInputApplicationCommandMention("subordinates reclaim", SUBORDINATE_COMMAND_SUITE_ID)}.`;
-}
-
 async function execute(interaction) {
   if (interaction.customId == "shipOptions") {
     interaction.client.settings.set(interaction.guild.id, interaction.fields.getTextInputValue('shipOptionsInput').split("\n"), "shipOptions");
     await interaction.reply("Successfully changed ship options");
   } else if (interaction.customId == "channels") {
+    let nullChannels = [];
+    
     for (let component of interaction.components.map(component => component.components[0])) {
       interaction.client.settings.set(interaction.guild.id, component.value, component.customId.replace("Input", ""));
+      
+      if (!(await helpers.getChannel(interaction.guild, component.value))) {
+        nullChannels.push(component.value);
+        logger.debug("null channel")
+      }
     }
+
+    logger.debug(nullChannels);
+
+
     
-    await interaction.reply("Successfully set channel names");
+    if (nullChannels.length == 0) {
+      await interaction.reply("Successfully set channels");
+    } else {
+      await interaction.reply("**Successfully set channels with warning(s):**\n" +
+        (nullChannels.length > 0 ? ("The following channel(s) could not be found:\n" + nullChannels.join("\n")) : ""));
+    }
   } else if (interaction.customId.startsWith("setSubordinates")) {
     await interaction.deferReply({ ephemeral: false });
     const settingTo = interaction.customId.replace("setSubordinates-", "");
@@ -43,9 +53,9 @@ async function execute(interaction) {
       await interaction.followUp("Successfully set subordinates");
     } else {
       await interaction.followUp("**Successfully set subordinates with warning(s):**\n" +
-        (setSubordinates.nullIds.length > 0 ? ("The following members could not be found so their CO has not been set:\n" + setSubordinates.nullIds.join("\n")) : "") +
+        (setSubordinates.nullIds.length > 0 ? ("The following member(s) could not be found so their CO has not been set:\n" + setSubordinates.nullIds.join("\n")) : "") +
         (setSubordinates.nullIds.length > 0 ? "\n" : "") +
-        (setSubordinates.takenIds.length > 0 ? ("The following members already had a CO and have not been set:\n" + setSubordinates.takenIds.join("\n")) : ""))
+        (setSubordinates.takenIds.length > 0 ? ("The following member(s) already had a CO and have not been set:\n" + setSubordinates.takenIds.join("\n")) : ""))
     }
   } else if (interaction.customId == "voyagePermissionsRole") {
     interaction.client.settings.set(interaction.guild.id, interaction.fields.getTextInputValue('voyagePermissionsRoleInput'), "voyagePermissionsRole");

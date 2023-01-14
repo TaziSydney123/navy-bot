@@ -86,7 +86,7 @@ async function getChannel(guild, name) {
   let channels = await guild.channels.fetch();
 
   for (let channel of channels.values()) {
-    if (channel.name === name) {
+    if (channel.name.toLowerCase().includes(name.toLowerCase())) {
       return channel;
     }
   }
