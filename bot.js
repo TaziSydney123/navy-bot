@@ -173,6 +173,7 @@ client.on(Events.GuildMemberRemove, async (member) => {
   const clearedSubordinatesDisplay = helpers.combineTwoArraysOfSameLengthIntoStringsWithSeparator(clearedSubordinatesNames, clearedSubordinates, " -- "); 
 
   // Send an alert that the person left if they had subordinates or were acting 
+  logger.debug(client.settings);
   const channel = await helpers.getChannel(member.guild, client.settings.get("botWarningChannel"));
   
   if (channel && (clearedSubordinates.length > 0 || actingFor)) {

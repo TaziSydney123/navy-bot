@@ -84,9 +84,10 @@ function millisecondsToDisplay(ms, relative = false) {
 
 async function getChannel(guild, name) {
   let channels = await guild.channels.fetch();
-
+  logger.debug(name);
+  logger.debug(guild.name);
   for (let channel of channels.values()) {
-    if (channel.name.toLowerCase().includes(name.toLowerCase())) {
+    if (channel.name.includes()) {
       return channel;
     }
   }
@@ -138,13 +139,13 @@ async function countOfficialVoyages(channel, member) {
         pingedMessagesList.push(new Date(Date.now() - message.createdAt));
       }
 
-      if(pingedMessagesList.length > 0) {
+      if (pingedMessagesList.length > 0) {
         lastOfficial = pingedMessagesList[0];
         hasLastOfficial = true;
       }
     }
 
-    if(!lastOfficialLead) {
+    if (!lastOfficialLead) {
       for (let message of pingedMessages.filter(message => message.author.id == member.id)) {
 
         message = message[1];
@@ -152,7 +153,7 @@ async function countOfficialVoyages(channel, member) {
         pingedMessagesSentList.push(new Date(Date.now() - message.createdAt));
       }
 
-      if(pingedMessagesSentList.length > 0) {
+      if (pingedMessagesSentList.length > 0) {
         lastOfficialLead = pingedMessagesSentList[0];
         hasLastOfficialLead = true;
       }
