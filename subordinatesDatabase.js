@@ -163,6 +163,14 @@ class SubordinatesDB {
   }
 
   removeSubordinateReference(subordinateId) {
+    if (!subordinateId) {
+      return;
+    }
+
+    if (!this.getNonActingSuperior(subordinateId)) {
+      return;
+    }
+    
     if (!this.client.subordinates.has(this.getNonActingSuperior(subordinateId))) {
       return;
     }
