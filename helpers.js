@@ -252,12 +252,16 @@ async function getMentionsFromIds(ids, guild) {
 
 function combineTwoArraysOfSameLengthIntoStringsWithSeparator(array1, array2, separator) {
   let result = [];
+
+  if (!array1 || !array2) {
+    return [];
+  }
   
   for (index in array1) {
     result.push(array1[index] + separator + array2[index]);
   }
   
-  return result;xz
+  return result;
 }
 
 function getElementsUpToStringifiedLength(array, maxLength, joiner = "\n") {
@@ -305,4 +309,4 @@ module.exports = {
   combineTwoArraysOfSameLengthIntoStringsWithSeparator: combineTwoArraysOfSameLengthIntoStringsWithSeparator,
   getElementsUpToStringifiedLength: getElementsUpToStringifiedLength,
   getElementAddedOrRemovedFromTwoArrays: getElementAddedOrRemovedFromTwoArrays
-};
+}

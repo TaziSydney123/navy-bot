@@ -12,6 +12,7 @@
   "dependencies": {
     "dayjs": "^1.11.7",
     "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
     "enmap": "^5.9.5",
     "glob": "^8.0.3",
     "node-fetch": "^3.2.6",

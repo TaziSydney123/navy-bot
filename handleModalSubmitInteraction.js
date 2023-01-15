@@ -12,8 +12,6 @@ const helpers = require("./helpers")
 
 const logger = require("./logger")
 
-const SUBORDINATE_COMMAND_SUITE_ID = process.env.SUBORDINATE_COMMAND_SUITE_ID;
-
 async function execute(interaction) {
   if (interaction.customId == "shipOptions") {
     interaction.client.settings.set(interaction.guild.id, interaction.fields.getTextInputValue('shipOptionsInput').split("\n"), "shipOptions");

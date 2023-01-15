@@ -37,16 +37,16 @@ async function execute(interaction) {
         .setCustomId('voyageLogbookChannelInput')
         .setLabel("The name of the logbook channel - without #")
         .setStyle(TextInputStyle.Short)
-        .setValue(interaction.client.settings.get(interaction.guild.id, "voyageLogbookChannel")
+        .setValue(interaction.client.settings.get(interaction.guild.id, "voyageLogbookChannel"))
         .setMaxLength(MAX_INPUT_LENGTH)
-        .setMinLength(MIN_INPUT_LENGTH));
+        .setMinLength(MIN_INPUT_LENGTH);
       const botWarningChannelInput = new TextInputBuilder()
         .setCustomId('botWarningChannelInput')
         .setLabel("The channel for alerts by the bot")
         .setStyle(TextInputStyle.Short)
-        .setValue(interaction.client.settings.get(interaction.guild.id, "botWarningChannel")
+        .setValue(interaction.client.settings.get(interaction.guild.id, "botWarningChannel"))
         .setMaxLength(MAX_INPUT_LENGTH)
-        .setMinLength(MIN_INPUT_LENGTH));
+        .setMinLength(MIN_INPUT_LENGTH);
       
       let inputs = [logbookChannelInput, botWarningChannelInput]
 
@@ -63,9 +63,9 @@ async function execute(interaction) {
         .setCustomId('voyagePermissionsRoleInput')
         .setLabel("The name of the voyage permissions role")
         .setStyle(TextInputStyle.Short)
-        .setValue(interaction.client.settings.get(interaction.guild.id, "voyagePermissionsRole")
+        .setValue(interaction.client.settings.get(interaction.guild.id, "voyagePermissionsRole"))
         .setMaxLength(MAX_INPUT_LENGTH)
-        .setMinLength(MIN_INPUT_LENGTH));
+        .setMinLength(MIN_INPUT_LENGTH);
       
       const firstActionRow = new ActionRowBuilder().addComponents(roleInput);
 

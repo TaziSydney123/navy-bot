@@ -1,9 +1,14 @@
-const TOKEN = process.env['TOKEN'];
-const CLIENT_ID = process.env['CLIENT_ID'];
+const logger = require("./logger");
+
+const { parsed, error } = require('dotenv').config({
+  path: './process.env'
+});
+
+if (error) {
+  throw error;
+}
 
 const { REST, Routes } = require('discord.js');
-
-const rest = new REST({ version: '10' }).setToken(TOKEN);
 
 const { SlashCommandBuilder, PermissionFlagsBits, userMention } = require('discord.js');
 
@@ -23,8 +28,6 @@ const { Collection } = require("discord.js");
 const helpers = require("./helpers.js")
 
 const glob = require("glob");
-
-const logger = require("./logger");
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildPresences], partials: [Partials.GUILD_MEMBER] });
@@ -98,6 +101,8 @@ let commands = [];
 client.on(Events.ClientReady, (client) => {
   logger.info(`Logged in as ${client.user.tag}!`);
 
+  const rest = new REST({ version: '10' }).setToken(parsed.TOKEN);
+
   client.commands = new Collection();
 
   // const commandsPath = path.join(__dirname, 'commands');
@@ -130,7 +135,7 @@ client.on(Events.ClientReady, (client) => {
 
           // The put method is used to fully refresh all commands in the guild with the current set
           const data = await rest.put(
-            Routes.applicationCommands(CLIENT_ID),
+            Routes.applicationCommands(parsed.CLIENT_ID),
             { body: commands },
           );
 
@@ -164,12 +169,15 @@ client.on(Events.GuildMemberRemove, async (member) => {
   const reclaimedFromActing = subordinateDB.reclaimSubordinates(member.id);
   const clearedSubordinates = subordinateDB.clearSubordinates(member.id);
 
+  const clearedSubordinatesNames = await helpers.getUsernamesFromIds(clearedSubordinates, member.guild);
+  const clearedSubordinatesDisplay = helpers.combineTwoArraysOfSameLengthIntoStringsWithSeparator(clearedSubordinatesNames, clearedSubordinates, " -- "); 
+
   // Send an alert that the person left if they had subordinates or were acting 
   const channel = await helpers.getChannel(member.guild, member.client.settings.get(member.guild, "botWarningChannel"));
   if (channel && (clearedSubordinates.length > 0 || actingFor || reclaimedFromActing)) {
     await channel.send(
       `-------------------------\n${userMention(member.id)} **has left the server!**
-      ${(superior ? "CO: " + userMention(superior) + "\n" : "")}${((actingFor && actingFor != superior) ? "Acting For: " + userMention(actingFor) : "")}${(clearedSubordinates.length > 0 ? "**Subordinate IDs:**\n" + clearedSubordinates.join("\n") + "\n" : "")}` 
+      ${(superior ? "CO: " + userMention(superior) + "\n" : "")}${((actingFor && actingFor != superior) ? "Acting For: " + userMention(actingFor) : "")}${(clearedSubordinates.length > 0 ? "**Subordinate IDs:**\n" + clearedSubordinatesDisplay + "\n" : "")}` 
     )
   }
 });
@@ -245,19 +253,19 @@ client.on(Events.InteractionCreate, async interaction => {
   } else if (interaction.isModalSubmit()) {
     await require("./handleModalSubmitInteraction").execute(interaction);
   } else if (interaction.isAutocomplete()) {
-		const command = interaction.client.commands.get(interaction.commandName);
+    const command = interaction.client.commands.get(interaction.commandName);
 
-		if (!command) {
-			logger.error(`No command matching ${interaction.commandName} was found.`);
-			return;
-		}
+    if (!command) {
+      logger.error(`No command matching ${interaction.commandName} was found.`);
+      return;
+    }
 
-		try {
-			await command.autocomplete(interaction);
-		} catch (error) {
-			logger.error(error);
-		}
-	}
+    try {
+      await command.autocomplete(interaction);
+    } catch (error) {
+      logger.error(error);
+    }
+  }
 
   if (interaction.isButton()) {
     require("./handleButtonPress").execute(interaction);
@@ -266,8 +274,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
 
 function loginBot() {
-  logger.info("Signing in.");
-  client.login(TOKEN);
+  logger.info("Signing in.")
+  client.login(parsed.TOKEN);
 }
 
 module.exports = {

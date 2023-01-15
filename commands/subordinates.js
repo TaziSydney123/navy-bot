@@ -1,3 +1,13 @@
+const logger = require("../logger")
+
+const { parsed, error } = require('dotenv').config({
+  path: './process.env'
+});
+
+if (error) {
+  throw error;
+}
+
 const { SlashCommandBuilder, PermissionFlagsBits, chatInputApplicationCommandMention } = require('discord.js');
 
 const Enmap = require('enmap');
@@ -8,14 +18,10 @@ const { ActionRowBuilder, TextInputBuilder, TextInputStyle, ModalBuilder } = req
 
 const helpers = require("../helpers")
 
-const logger = require("../logger")
-
-const SUBORDINATE_COMMAND_SUITE_ID = process.env.SUBORDINATE_COMMAND_SUITE_ID;
-
 const getSubordinatesReclaimMessage = (personal = true, setActing = false) => {
   return setActing ?
-    `You may not set someone as acting for ${personal ? "yourself" : "someone"} while someone is acting for you already. First run ${chatInputApplicationCommandMention("subordinates reclaim", SUBORDINATE_COMMAND_SUITE_ID)}.`
-    : `You may not modify ${personal ? "your" : "someones"} subordinates while someone is acting for you. First run ${chatInputApplicationCommandMention("subordinates reclaim", SUBORDINATE_COMMAND_SUITE_ID)}.`;
+    `You may not set someone as acting for ${personal ? "yourself" : "someone"} while someone is acting for you already. First run ${chatInputApplicationCommandMention("subordinates reclaim", parsed.SUBORDINATE_COMMAND_SUITE_ID)}.`
+    : `You may not modify ${personal ? "your" : "someones"} subordinates while someone is acting for you. First run ${chatInputApplicationCommandMention("subordinates reclaim", parsed.SUBORDINATE_COMMAND_SUITE_ID)}.`;
 }
 
 const subordinatesCommand = new SlashCommandBuilder()
@@ -183,7 +189,7 @@ module.exports = {
         const reclaimed = subordinateDB.reclaimSubordinates(interaction.member.id);
         interaction.reply(reclaimed ?
           "Successfully reclaimed subordinates" :
-          {ephemeral: true, content: "You have not set anyone as acting. Use " + chatInputApplicationCommandMention("subordinates set_acting", SUBORDINATE_COMMAND_SUITE_ID) + " first."}
+          {ephemeral: true, content: "You have not set anyone as acting. Use " + chatInputApplicationCommandMention("subordinates set_acting", parsed.SUBORDINATE_COMMAND_SUITE_ID) + " first."}
         );
       }
     } else if (interaction.options.getSubcommand() === "transfer") {
