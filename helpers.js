@@ -84,10 +84,9 @@ function millisecondsToDisplay(ms, relative = false) {
 
 async function getChannel(guild, name) {
   let channels = await guild.channels.fetch();
-  logger.debug(name);
-  logger.debug(guild.name);
+  logger.debug("name input: " + name);
   for (let channel of channels.values()) {
-    if (channel.name.includes()) {
+    if (channel.name.includes(name)) {
       return channel;
     }
   }

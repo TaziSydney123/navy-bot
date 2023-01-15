@@ -173,13 +173,15 @@ client.on(Events.GuildMemberRemove, async (member) => {
   const clearedSubordinatesDisplay = helpers.combineTwoArraysOfSameLengthIntoStringsWithSeparator(clearedSubordinatesNames, clearedSubordinates, " -- "); 
 
   // Send an alert that the person left if they had subordinates or were acting 
-  logger.debug(client.settings);
-  const channel = await helpers.getChannel(member.guild, client.settings.get("botWarningChannel"));
+  // logger.debug(client.settings);
+  const channelName = client.settings.get(member.guild.id, "botWarningChannel");
+  logger.debug(channelName)
+  const channel = await helpers.getChannel(member.guild, channelName);
   
   if (channel && (clearedSubordinates.length > 0 || actingFor)) {
     await channel.send(
-      `-------------------------\n${userMention(member.id)} **has left the server!**
-      ${(superior ? "CO: " + userMention(superior) + "\n" : "")}${((actingFor && actingFor != superior) ? "Acting For: " + userMention(actingFor) : "")}${(clearedSubordinates.length > 0 ? "**Subordinate IDs:**\n" + clearedSubordinatesDisplay + "\n" : "")}` 
+`-------------------------\n${userMention(member.id)} **has left the server!**
+${(superior ? "CO: " + userMention(superior) + "\n" : "")}${((actingFor && actingFor != superior) ? "Acting For: " + userMention(actingFor) : "")}${(clearedSubordinates.length > 0 ? "**Subordinate IDs:**\n" + clearedSubordinatesDisplay.join("\n"): "")}` 
     )
   }
 });
