@@ -27,7 +27,7 @@ const getSubordinatesReclaimMessage = (personal = true, setActing = false) => {
 const subordinatesCommand = new SlashCommandBuilder()
   .setName('subordinates')
   .setDescription('Configure your or someone else\'s subordinates')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+  .setDefaultMemberPermissions(PermissionFlagsBits.CreatePrivateThreads)
   .addSubcommand(subcommand =>
     subcommand
       .setName("set")
