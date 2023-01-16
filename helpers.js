@@ -35,7 +35,7 @@ function roleExists(interaction, targetRole) {
 
 async function memberIdExists(guild, targetMemberId) {
   const members = await guild.members.fetch();
-  for (member of members.values()) {
+  for (let member of members.values()) {
     if (member.id == targetMemberId) {
       return true;
     }
@@ -124,7 +124,7 @@ async function countOfficialVoyages(channel, member) {
 
         message = message[1];
         
-        pingedMessagesList.push(new Date(Date.now() - message.createdAt));
+        pingedMessagesList.push(new Date(Date.now() - message.createdTimestamp));
       }
 
       if (pingedMessagesList.length > 0) {
@@ -138,7 +138,7 @@ async function countOfficialVoyages(channel, member) {
 
         message = message[1];
         
-        pingedMessagesSentList.push(new Date(Date.now() - message.createdAt));
+        pingedMessagesSentList.push(new Date(Date.now() - message.createdTimestamp));
       }
 
       if (pingedMessagesSentList.length > 0) {
@@ -146,16 +146,20 @@ async function countOfficialVoyages(channel, member) {
         hasLastOfficialLead = true;
       }
     }
-
+    
+    for (const message of pingedMessages.values()) {
+      logger.debug("Voyage: " + millisecondsToDisplay(new Date(Date.now() - message.createdTimestamp), true) + ", for user: " + member.id);
+    }
+    
     totalOfficials += pingedMessages.size;
     
     let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id);
     totalOfficialsLead += pingedMessagesSent.size;
 
-    const pingedMessageMonth = pingedMessages.filter(message => message.createdAt > thirtyDaysAgo);
+    const pingedMessageMonth = pingedMessages.filter(message => message.createdTimestamp > thirtyDaysAgo);
     weeklyOfficials += pingedMessageMonth.size;
 
-    const pingedMessageSentMonth = pingedMessagesSent.filter(message => message.createdAt > thirtyDaysAgo);
+    const pingedMessageSentMonth = pingedMessagesSent.filter(message => message.createdTimestamp > thirtyDaysAgo);
     weeklyOfficialsLead += pingedMessageSentMonth.size;
 
     if (messages.size > 0) {

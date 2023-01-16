@@ -20,9 +20,6 @@ const { underscore, bold, italic } = require("discord.js");
 
 const SubordinateDBClass = require("./subordinatesDatabase").SubordinatesDB;
 
-const fs = require('node:fs');
-const path = require('node:path');
-
 const { Collection } = require("discord.js");
 
 const helpers = require("./helpers.js")
