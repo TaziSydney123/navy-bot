@@ -207,7 +207,7 @@ class SubordinatesDB {
     if (this.memberHasActingSuperior(this.getNonActingSuperior(subordinateId))) {
       if (subordinateId == this.client.actingSuperiors.get(this.getNonActingSuperior(subordinateId))) {
         let currentCOStep = this.getNonActingSuperior(subordinateId);
-        while ((await this.guild.members.fetch(currentCOStep)).displayName.match(/^ *\[ *LOA *\] */gm)) {
+        while ((await this.guild.members.fetch(currentCOStep)).displayName.match(/^ *\[ *LOA-\d *\] */gm)) {
           currentCOStep = this.getNonActingSuperior(currentCOStep);
         }
         return currentCOStep;

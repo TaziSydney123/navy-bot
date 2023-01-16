@@ -19,7 +19,7 @@ const checkSquadsCommand = new SlashCommandBuilder()
       .setDescription('The ship to check - leave blank for any ship or no ship')
       .setRequired(false)
       .setAutocomplete(true))
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
+  .setDefaultMemberPermissions(PermissionFlagsBits.CreatePrivateThreads);
 
 module.exports = {
   data: checkSquadsCommand, 
@@ -43,7 +43,7 @@ module.exports = {
       let rolesOfUser = member.roles.cache.map(role => role.name);
       if (name.includes("Seaman") && !name.includes("Seaman Recruit")) {
         let userInSquad = false;
-        if (helpers.arrayContainsRegex(rolesOfUser, /Squad$/g)) {
+        if (helpers.arrayContainsRegex(rolesOfUser, /[Ss]quad$/g)) {
           userInSquad = true;
         }
 
@@ -72,7 +72,7 @@ module.exports = {
       await interaction.followUp(bold(underscore("Users who do not have a squad")) + "\n"
         + usersNotInSquads.map(userId => userMention(userId)).join("\n"));
     } else {
-      await interaction.followUp(bold("All users are in sqauds!"));
+      await interaction.followUp(bold("All users are in squads!"));
     }
   }, 
   async autocomplete(interaction) {

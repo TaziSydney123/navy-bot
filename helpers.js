@@ -1,9 +1,7 @@
 const { userMention } = require('discord.js');
-const dayjs = require('dayjs')
 const logger = require("./logger");
 
-var duration = require('dayjs/plugin/duration');
-dayjs.extend(duration);
+const humanizeDuration = require("humanize-duration");
 
 function getAllRoles(interaction) {
   const roles = interaction.guild.roles.cache.map(role => role);
@@ -59,28 +57,30 @@ async function getMemberFromUsername(guild, targetMember) {
 }
 
 function millisecondsToDisplay(ms, relative = false) {
-  const duration = dayjs.duration(ms);
-  
-  let times = [];
-  
-  times.push({"name": duration.years() == 1 ? "year" : "years", "realDuration": duration.asYears(), "relativeDuration": duration.years()});
-  times.push({"name": duration.months() == 1 ? "month" : "months", "realDuration": duration.asMonths(), "relativeDuration": duration.months()});
-  times.push({"name": duration.weeks() == 1 ? "week" : "weeks", "realDuration": duration.asWeeks(), "relativeDuration": duration.weeks()});
-  times.push({"name": duration.days() - duration.weeks() * 7 == 1 ? "day" : "days", "realDuration": duration.asDays(), "relativeDuration": duration.days() - duration.weeks() * 7});
-  times.push({"name": duration.hours() == 1 ? "hour" : "hours", "realDuration": duration.asHours(), "relativeDuration": duration.hours()});
-  times.push({"name": duration.minutes() == 1 ? "minute" : "minutes", "realDuration": duration.asMinutes(), "relativeDuration": duration.minutes()});
-  times.push({"name": duration.seconds() == 1 ? "second" : "seconds", "realDuration": duration.asSeconds(), "relativeDuration": duration.seconds()});
-  
-  wholeTimes = times.filter((time) => time.realDuration >= 1 && time.relativeDuration != 0);
-  
-  if (wholeTimes.length < 1) {
+  const durationDisplay = humanizeDuration(ms, { 
+    largest: 2,
+  }); 
+          
+  if (ms < 1000) {
     return "Just Now";
-  } else if (wholeTimes.length < 2) {
-    return wholeTimes[0].relativeDuration + " " + wholeTimes[0].name + (relative ? " ago" : "");
   } else {
-    return wholeTimes[0].relativeDuration + " " + wholeTimes[0].name + ", " + wholeTimes[1].relativeDuration + " " + wholeTimes[1].name + (relative ? " ago" : "");
+    return durationDisplay + (relative ? " ago" : "");
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function getChannel(guild, name) {
   let channels = await guild.channels.fetch();
