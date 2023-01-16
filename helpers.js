@@ -59,6 +59,7 @@ async function getMemberFromUsername(guild, targetMember) {
 function millisecondsToDisplay(ms, relative = false) {
   const durationDisplay = humanizeDuration(ms, { 
     largest: 2,
+    round: true
   }); 
           
   if (ms < 1000) {
@@ -113,8 +114,7 @@ async function countOfficialVoyages(channel, member) {
     }
     
     const messages = await channel.messages.fetch(options);
-
-    const pingedMessages = messages.filter(message => message.mentions.has(member.id));
+    const pingedMessages = messages.filter(message => message.mentions.members.has(member.id));
 
     let pingedMessagesList = [];
     let pingedMessagesSentList = [];
@@ -145,10 +145,6 @@ async function countOfficialVoyages(channel, member) {
         lastOfficialLead = pingedMessagesSentList[0];
         hasLastOfficialLead = true;
       }
-    }
-    
-    for (const message of pingedMessages.values()) {
-      logger.debug("Voyage: " + millisecondsToDisplay(new Date(Date.now() - message.createdTimestamp), true) + " ("  + message.createdTimestamp + ")" +", for user: " + member.id);
     }
     
     totalOfficials += pingedMessages.size;
