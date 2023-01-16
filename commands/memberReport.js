@@ -98,6 +98,11 @@ module.exports = {
         inline: false
       });
     }
+    fields.push({
+        name: 'Warning',
+        value: 'We are still working on fixing some problems with the bot, so right now the total official voyages is not accurate',
+        inline: false
+    });
     const memberEmbed = new EmbedBuilder()
       .setColor(0x0099FF)
       .setTitle(member.displayName)
