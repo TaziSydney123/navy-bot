@@ -101,8 +101,10 @@ async function countOfficialVoyages(channel, member) {
       "totalOfficialsLead": totalOfficialsLead,
       "weeklyOfficialsLead": weeklyOfficialsLead,
       "lastOfficialLead": lastOfficialLead,
-      "hasLastOfficialLead": hasLastOfficialLead}; 
-  } 
+      "hasLastOfficialLead": hasLastOfficialLead
+    } 
+  }
+  
   while (true) {
     const options = { limit: 100 };
     
@@ -146,8 +148,11 @@ async function countOfficialVoyages(channel, member) {
     }
 
     totalOfficials += pingedMessages.size;
-    logger.debug(member + " +" + pingedMessages.size);
-    let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id)
+    if (pingedMessages.size > 0) {
+      logger.debug(member + " +" + pingedMessages[0].createdAt);
+    }
+    
+    let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id);
     totalOfficialsLead += pingedMessagesSent.size;
 
     const pingedMessageMonth = pingedMessages.filter(message => message.createdAt > thirtyDaysAgo);
@@ -175,7 +180,7 @@ async function countOfficialVoyages(channel, member) {
     "weeklyOfficialsLead": weeklyOfficialsLead,
     "lastOfficialLead": lastOfficialLead,
     "hasLastOfficialLead": hasLastOfficialLead
-  };
+  }
 }
 
 function arrayContainsRegex(array, regex) {
