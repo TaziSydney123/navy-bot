@@ -148,7 +148,7 @@ async function countOfficialVoyages(channel, member) {
     }
     
     for (const message of pingedMessages.values()) {
-      logger.debug("Voyage: " + millisecondsToDisplay(new Date(Date.now() - message.createdTimestamp), true) + ", for user: " + member.id);
+      logger.debug("Voyage: " + millisecondsToDisplay(new Date(Date.now() - message.createdTimestamp), true) + " ("  + message.createdTimestamp + ")" +", for user: " + member.id);
     }
     
     totalOfficials += pingedMessages.size;
