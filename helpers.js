@@ -148,9 +148,6 @@ async function countOfficialVoyages(channel, member) {
     }
 
     totalOfficials += pingedMessages.size;
-    if (pingedMessages.size > 0) {
-      logger.debug(member + " +" + pingedMessages[0].createdAt);
-    }
     
     let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id);
     totalOfficialsLead += pingedMessagesSent.size;
