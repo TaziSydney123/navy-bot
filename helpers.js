@@ -68,20 +68,6 @@ function millisecondsToDisplay(ms, relative = false) {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 async function getChannel(guild, name) {
   let channels = await guild.channels.fetch();
   logger.debug("name input: " + name);
@@ -107,14 +93,15 @@ async function countOfficialVoyages(channel, member) {
 
   let lastMessageId;
   if (!channel) {
-    return {"totalOfficials": totalOfficials,
-          "weeklyOfficials": weeklyOfficials,
-          "lastOfficial": lastOfficial,
-          "hasLastOfficial": hasLastOfficial,
-          "totalOfficialsLead": totalOfficialsLead,
-          "weeklyOfficialsLead": weeklyOfficialsLead,
-          "lastOfficialLead": lastOfficialLead,
-          "hasLastOfficialLead": hasLastOfficialLead}; 
+    return {
+      "totalOfficials": totalOfficials,
+      "weeklyOfficials": weeklyOfficials,
+      "lastOfficial": lastOfficial,
+      "hasLastOfficial": hasLastOfficial,
+      "totalOfficialsLead": totalOfficialsLead,
+      "weeklyOfficialsLead": weeklyOfficialsLead,
+      "lastOfficialLead": lastOfficialLead,
+      "hasLastOfficialLead": hasLastOfficialLead}; 
   } 
   while (true) {
     const options = { limit: 100 };
@@ -159,6 +146,7 @@ async function countOfficialVoyages(channel, member) {
     }
 
     totalOfficials += pingedMessages.size;
+    logger.debug(member + " +" + pingedMessages.size);
     let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id)
     totalOfficialsLead += pingedMessagesSent.size;
 
@@ -178,14 +166,16 @@ async function countOfficialVoyages(channel, member) {
   weeklyOfficials = weeklyOfficials / 4; // Average the Officials per week this month
   weeklyOfficialsLead = weeklyOfficialsLead / 4;
   
-  return {"totalOfficials": totalOfficials,
-          "weeklyOfficials": weeklyOfficials,
-          "lastOfficial": lastOfficial,
-          "hasLastOfficial": hasLastOfficial,
-          "totalOfficialsLead": totalOfficialsLead,
-          "weeklyOfficialsLead": weeklyOfficialsLead,
-          "lastOfficialLead": lastOfficialLead,
-          "hasLastOfficialLead": hasLastOfficialLead};
+  return {
+    "totalOfficials": totalOfficials,
+    "weeklyOfficials": weeklyOfficials,
+    "lastOfficial": lastOfficial,
+    "hasLastOfficial": hasLastOfficial,
+    "totalOfficialsLead": totalOfficialsLead,
+    "weeklyOfficialsLead": weeklyOfficialsLead,
+    "lastOfficialLead": lastOfficialLead,
+    "hasLastOfficialLead": hasLastOfficialLead
+  };
 }
 
 function arrayContainsRegex(array, regex) {
@@ -196,30 +186,6 @@ function arrayContainsRegex(array, regex) {
   }
 
   return false;
-}
-
-async function getLastPing(channel, member) {
-  let lastMessageId;
-
-  while (true) {
-    const options = { limit: 1 };
-    if (lastMessageId) {
-      options.before = lastMessageId;
-    }
-    const messages = await channel.messages.fetch(options);
-
-    const pingedMessages = messages.filter(message => message.mentions.has(member.id));
-
-    pingedMessageCount += pingedMessages.size;
-
-    if (messages.size > 0) {
-      lastMessageId = messages.last().id;
-    } else {
-      break;
-    }
-  }
-
-  return pingedMessageCount;
 }
 
 async function getDepartments(member) {
@@ -300,7 +266,6 @@ module.exports = {
   getChannel: getChannel,
   countOfficialVoyagesget: countOfficialVoyages,
   arrayContainsRegex: arrayContainsRegex,
-  getLastPing: getLastPing, 
   flipObjectKeyAndValues: flipObjectKeyAndValues, 
   countOfficialVoyages: countOfficialVoyages,
   getDepartments: getDepartments,
