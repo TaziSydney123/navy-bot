@@ -29,10 +29,16 @@ module.exports = {
 
     let member = null;
 
-    if (interaction.options.getUser("member")) {
-      member = await interaction.guild.members.fetch(interaction.options.getUser("member").id);
-    } else {
-      member = interaction.member;
+    
+    try {
+      if (interaction.options.getUser("member")) {
+        member = await interaction.guild.members.fetch(interaction.options.getUser("member").id);
+      } else {
+        member = interaction.member;
+      }
+    } catch {
+      interaction.followUp("That member does not exist in the server");
+      return;
     }
 
     const timeInServer = helpers.millisecondsToDisplay((Date.now() - member.joinedTimestamp));
