@@ -45,7 +45,19 @@ module.exports = {
     const timeInServer = helpers.millisecondsToDisplay((Date.now() - member.joinedTimestamp));
     const logbookChannel = await helpers.getChannel(interaction.guild, interaction.client.settings.get(interaction.guild.id, "voyageLogbookChannel"))
     const voyageStats = member.client.officialVoyageCountCache.get(member.guild.id, member.id);
-    logger.debug(voyageStats)
+    if (!voyageStats) {
+      voyageStats = {
+        totalOfficials: 0,
+        weeklyOfficials: 0,
+        lastOfficial: null,
+        totalOfficialsLed: 0,
+        weeklyOfficialsLed: 0,
+        lastOfficialLed: null,
+        
+        hasLastOfficial: false,
+        hasLastOfficialLed: false,
+      };
+    }
     const lastVoyage = voyageStats.hasLastOfficial ? helpers.millisecondsToDisplay(voyageStats.lastOfficial, true) : "None"
     const lastVoyageLed = voyageStats.hasLastOfficialLed ? helpers.millisecondsToDisplay(voyageStats.lastOfficialLed, true) : "None"
     const departments = await helpers.getDepartments(member);
@@ -62,10 +74,9 @@ module.exports = {
     let roleChanges = interaction.client.roleUpdates.get(member.id);
     
     if (roleChanges) {
-      roleChanges = await Promise.all(roleChanges.map(async update => (update.change == "add" ? "Added role " : "Removed role ") +
+      roleChanges = await Promise.all(roleChanges.map(async update => (
+        update.change == "add" ? "Added " : "Removed ") +
         (!interaction.guild.roles.cache.get(update.role) ? "*Unknown Role*" : interaction.guild.roles.cache.get(update.role).name) +
-        (update.change == "add" ? " to " : " from ") +
-        (await interaction.guild.members.fetch(update.memberId)).displayName +
         " (" +
         helpers.millisecondsToDisplay(Date.now() - update.date, true) +
         ")"));
@@ -105,7 +116,7 @@ module.exports = {
     if (subordinateList.length > 0) {
       fields.push({
         name: 'Current Subordinates:',
-        value: (await helpers.getMentionsFromIds(subordinateList, interaction.guild)).join(", "),
+        value: helpers.getMentionsFromIds(subordinateList).join(", "),
         inline: false
       });
     }

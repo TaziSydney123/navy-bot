@@ -296,8 +296,8 @@ async function getUsernamesFromIds(ids, guild) {
   return await Promise.all(ids.map(async id => (await guild.members.fetch(id)).displayName));
 }
 
-async function getMentionsFromIds(ids, guild) {
-  return await Promise.all(ids.map(async id => (userMention(id))));
+function getMentionsFromIds(ids) {
+  return ids.map(id => (userMention(id)));
 }
 
 function combineTwoArraysOfSameLengthIntoStringsWithSeparator(array1, array2, separator) {
