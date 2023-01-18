@@ -27,7 +27,7 @@ const helpers = require("./helpers.js")
 const glob = require("glob");
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildPresences], partials: [Partials.GUILD_MEMBER] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMessages], partials: [Partials.GUILD_MEMBER] });
 
 const oneMonthMilliseconds = 1000 * 60 * 60 * 24 * 30;
 
@@ -93,6 +93,14 @@ client.roleUpdates = new Enmap({
   ensureProps: true,
 });
 
+client.officialVoyageCountCache = new Enmap({
+  name: "officialVoyageCountCache",
+  fetchAll: true,
+  autoFetch: true,
+  cloneLevel: 'deep',
+  ensureProps: true,
+});
+
 let commands = [];
 
 client.on(Events.ClientReady, (client) => {
@@ -147,6 +155,10 @@ client.on(Events.ClientReady, (client) => {
 });
 
 client.on(Events.GuildMemberRemove, async (member) => {
+  if (member.id == client.id) {
+    return;
+  }
+  
   logger.warn("Member left the server with ID: " + member.id);
 
   const subordinateDB = new SubordinateDBClass({ "guild": member.guild, "client": client });
@@ -273,6 +285,13 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
+client.on(Events.MessageCreate, async (message) => {
+  if (await helpers.getChannel(message.guild, client.settings.get(message.guild.id, "voyageLogbookChannel"))) {
+    if (message.channel.name.includes(client.settings.get(message.guild.id, "voyageLogbookChannel"))) {
+      await helpers.cacheAllOfficialVoyageCounts(await helpers.getChannel(message.guild, client.settings.get(message.guild.id, "voyageLogbookChannel")));
+    }
+  }
+});
 
 function loginBot() {
   logger.info("Signing in.")

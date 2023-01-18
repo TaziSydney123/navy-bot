@@ -12,6 +12,8 @@ const helpers = require("../helpers")
 
 const subordinateDatabaseClass = require("../subordinatesDatabase.js").SubordinatesDB;
 
+const modalColor = 0x0099FF;
+
 const memberReportCommand = new SlashCommandBuilder()
   .setName('member_report')
   .setDescription('Make a full report on a member')
@@ -29,7 +31,6 @@ module.exports = {
 
     let member = null;
 
-    
     try {
       if (interaction.options.getUser("member")) {
         member = await interaction.guild.members.fetch(interaction.options.getUser("member").id);
@@ -43,19 +44,23 @@ module.exports = {
 
     const timeInServer = helpers.millisecondsToDisplay((Date.now() - member.joinedTimestamp));
     const logbookChannel = await helpers.getChannel(interaction.guild, interaction.client.settings.get(interaction.guild.id, "voyageLogbookChannel"))
-    const voyageStats = await helpers.countOfficialVoyages(logbookChannel, member)
-    const lastVoyage = voyageStats.hasLastOfficial ? helpers.millisecondsToDisplay(voyageStats.lastOfficial.getTime(), true) : "None"
-    const lastVoyageLead = voyageStats.hasLastOfficialLead ? helpers.millisecondsToDisplay(voyageStats.lastOfficialLead.getTime(), true) : "None"
+    const voyageStats = member.client.officialVoyageCountCache.get(member.guild.id, member.id);
+    logger.debug(voyageStats)
+    const lastVoyage = voyageStats.hasLastOfficial ? helpers.millisecondsToDisplay(voyageStats.lastOfficial, true) : "None"
+    const lastVoyageLed = voyageStats.hasLastOfficialLed ? helpers.millisecondsToDisplay(voyageStats.lastOfficialLed, true) : "None"
     const departments = await helpers.getDepartments(member);
     const subordinateDB = new subordinateDatabaseClass(interaction);
     const immediateSuperiorId = await subordinateDB.getSuperior(member.id);
     const subordinateList = subordinateDB.getAllSubordinatesOfSuperior(member.id);
     let nameChanges = interaction.client.nameUpdates.get(member.id);
+    
     if (nameChanges) {
       nameChanges = nameChanges.map(update => "\"" + update.before + "\" to \"" + update.after + "\" (" + helpers.millisecondsToDisplay(Date.now() - update.date, true) + ")");
       nameChanges = helpers.getElementsUpToStringifiedLength(nameChanges.reverse(), 400);
     }
+    
     let roleChanges = interaction.client.roleUpdates.get(member.id);
+    
     if (roleChanges) {
       roleChanges = await Promise.all(roleChanges.map(async update => (update.change == "add" ? "Added role " : "Removed role ") +
         (!interaction.guild.roles.cache.get(update.role) ? "*Unknown Role*" : interaction.guild.roles.cache.get(update.role).name) +
@@ -82,9 +87,9 @@ module.exports = {
     ];
     if (helpers.memberHasRole(member, interaction.client.settings.get(interaction.guild.id, "voyagePermissionsRole"))) {
       fields.push(
-        { name: 'Last Ofcl. Voyage Hosted', value: lastVoyageLead, inline: true },
-        { name: 'Weekly Ofcl. Voyages Hosted', value: voyageStats.weeklyOfficialsLead.toString(), inline: true },
-        { name: 'Total Ofcl. Voyages Hosted', value: voyageStats.totalOfficialsLead.toString(), inline: true }
+        { name: 'Last Ofcl. Voyage Hosted', value: lastVoyageLed, inline: true },
+        { name: 'Weekly Ofcl. Voyages Hosted', value: voyageStats.weeklyOfficialsLed.toString(), inline: true },
+        { name: 'Total Ofcl. Voyages Hosted', value: voyageStats.totalOfficialsLed.toString(), inline: true }
       );
     }
     if (nameChanges) {
@@ -104,13 +109,15 @@ module.exports = {
         inline: false
       });
     }
+    
     // fields.push({
     //     name: 'Warning',
     //     value: 'We are still working on fixing some problems with the bot, so right now the total official voyages is not accurate',
     //     inline: false
     // });
+    
     const memberEmbed = new EmbedBuilder()
-      .setColor(0x0099FF)
+      .setColor(modalColor)
       .setTitle(member.displayName)
       .setDescription(userMention(member.id))
       .setThumbnail(member.displayAvatarURL())

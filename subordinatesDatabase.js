@@ -40,9 +40,11 @@ class SubordinatesDB {
           const id = nameAndId.length > 1 ? nameAndId[1] : (firstInput.match(/^\d*$/) ? firstInput : null);
 
           let memberFromId;
+          
           if (await helpers.memberIdExists(this.guild, id)) {
             memberFromId = await this.guild.members.fetch(id);
           }
+          
           const member =  memberFromId ? memberFromId : await helpers.getMemberFromUsername(this.guild, firstInput);
           if (!member) {
             nullIds.push(firstInput);

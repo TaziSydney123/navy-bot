@@ -79,32 +79,16 @@ async function getChannel(guild, name) {
   }
 }
 
-async function countOfficialVoyages(channel, member) {
-  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+async function cacheAllOfficialVoyageCounts(channel) {
+  const thirtyDays = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-  let totalOfficials = 0;  
-  let weeklyOfficials = 0;
-  let lastOfficial = null
-  let totalOfficialsLead = 0;
-  let weeklyOfficialsLead = 0;
-  let lastOfficialLead = null;
-  
-  let hasLastOfficial = false;
-  let hasLastOfficialLead = false;
-
-  let lastMessageId;
+  let lastMessageId
+    
   if (!channel) {
-    return {
-      "totalOfficials": totalOfficials,
-      "weeklyOfficials": weeklyOfficials,
-      "lastOfficial": lastOfficial,
-      "hasLastOfficial": hasLastOfficial,
-      "totalOfficialsLead": totalOfficialsLead,
-      "weeklyOfficialsLead": weeklyOfficialsLead,
-      "lastOfficialLead": lastOfficialLead,
-      "hasLastOfficialLead": hasLastOfficialLead
-    } 
+    return;
   }
+
+  let userVoyageStats = {};
   
   while (true) {
     const options = { limit: 100 };
@@ -114,49 +98,41 @@ async function countOfficialVoyages(channel, member) {
     }
     
     const messages = await channel.messages.fetch(options);
-    const pingedMessages = messages.filter(message => message.mentions.members.has(member.id));
-
-    let pingedMessagesList = [];
-    let pingedMessagesSentList = [];
-
-    if(!lastOfficial) {
-      for (let message of pingedMessages) {
-
-        message = message[1];
-        
-        pingedMessagesList.push(new Date(Date.now() - message.createdTimestamp));
-      }
-
-      if (pingedMessagesList.length > 0) {
-        lastOfficial = pingedMessagesList[0];
-        hasLastOfficial = true;
-      }
-    }
-
-    if (!lastOfficialLead) {
-      for (let message of pingedMessages.filter(message => message.author.id == member.id)) {
-
-        message = message[1];
-        
-        pingedMessagesSentList.push(new Date(Date.now() - message.createdTimestamp));
-      }
-
-      if (pingedMessagesSentList.length > 0) {
-        lastOfficialLead = pingedMessagesSentList[0];
-        hasLastOfficialLead = true;
-      }
+    if (!messages.size > 0) {
+      break;
     }
     
-    totalOfficials += pingedMessages.size;
-    
-    let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id);
-    totalOfficialsLead += pingedMessagesSent.size;
-
-    const pingedMessageMonth = pingedMessages.filter(message => message.createdTimestamp > thirtyDaysAgo);
-    weeklyOfficials += pingedMessageMonth.size;
-
-    const pingedMessageSentMonth = pingedMessagesSent.filter(message => message.createdTimestamp > thirtyDaysAgo);
-    weeklyOfficialsLead += pingedMessageSentMonth.size;
+    for (let data of messages.map(message => ({pingedMembers: message.mentions.members, message: message}))) {
+      for (let pingedMember of data.pingedMembers) {
+        pingedMember = pingedMember[0];
+        if (userVoyageStats[pingedMember]) {
+          const currentVoyageStats = userVoyageStats[pingedMember];
+          userVoyageStats[pingedMember] = {
+           totalOfficials: currentVoyageStats.totalOfficials + 1,
+           weeklyOfficials: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? ((currentVoyageStats.weeklyOfficials * 4) + 1) / 4 : currentVoyageStats.weeklyOfficials,
+           lastOfficial: currentVoyageStats.lastOfficial,
+           totalOfficialsLed: (data.message.author.id == pingedMember ? (currentVoyageStats.totalOfficialsLed + 1) : currentVoyageStats.totalOfficialsLed),
+           weeklyOfficialsLed: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? (data.message.author.id == pingedMember ? (((currentVoyageStats.weeklyOfficialsLed * 4) + 1) / 4) : currentVoyageStats.weeklyOfficialsLed) : currentVoyageStats.weeklyOfficialsLed,
+           lastOfficialLed: !currentVoyageStats.hasLastOfficialLed ? (data.message.author.id == pingedMember ? new Date(Date.now() - data.message.createdTimestamp) : currentVoyageStats.lastOfficialLed) : currentVoyageStats.lastOfficialLed,
+          
+           hasLastOfficial: true,
+           hasLastOfficialLed: !currentVoyageStats.hasLastOfficialLed ? (data.message.author.id == pingedMember ? true : currentVoyageStats.lastOfficialLed) : currentVoyageStats.lastOfficialLed
+          };
+        } else {
+          userVoyageStats[pingedMember] = {
+           totalOfficials: 1,
+           weeklyOfficials: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? 1 / 4 : 0,
+           lastOfficial: new Date(Date.now() - data.message.createdTimestamp),
+           totalOfficialsLed: (data.message.author.id == pingedMember ? 1 : 0),
+           weeklyOfficialsLed: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? (data.message.author.id == pingedMember ? 1 / 4 : 0) : 0,
+           lastOfficialLed: (data.message.author.id == pingedMember) ? new Date(Date.now() - data.message.createdTimestamp) : null,
+          
+           hasLastOfficial: true,
+           hasLastOfficialLed: (data.message.author.id == pingedMember) ? true : false
+          };
+        }
+      }
+    }
 
     if (messages.size > 0) {
       lastMessageId = messages.last().id;
@@ -164,21 +140,127 @@ async function countOfficialVoyages(channel, member) {
       break;
     }
   }
-
-  weeklyOfficials = weeklyOfficials / 4; // Average the Officials per week this month
-  weeklyOfficialsLead = weeklyOfficialsLead / 4;
-  
-  return {
-    "totalOfficials": totalOfficials,
-    "weeklyOfficials": weeklyOfficials,
-    "lastOfficial": lastOfficial,
-    "hasLastOfficial": hasLastOfficial,
-    "totalOfficialsLead": totalOfficialsLead,
-    "weeklyOfficialsLead": weeklyOfficialsLead,
-    "lastOfficialLead": lastOfficialLead,
-    "hasLastOfficialLead": hasLastOfficialLead
-  }
+  console.log("Stats: " + userVoyageStats)
+  channel.client.officialVoyageCountCache.set(channel.guild.id, userVoyageStats);
+  logger.debug(channel.client.officialVoyageCountCache.get(""))
+  return true;
 }
+
+// async function cacheOfficialVoyageCountForUser(channel, member) {
+//   //Warning: Do not use for more than a few members at a time. Instead use the cacheOfficialVoyageCountForUsers
+//   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+//   const memberCached = member.client.officialVoyageCountCache.has(member.id);
+
+//   let totalOfficials = 0;  
+//   let weeklyOfficials = 0;
+//   let lastOfficial = null
+//   let totalOfficialsLed = 0;
+//   let weeklyOfficialsLed = 0;
+//   let lastOfficialLed = null;
+  
+//   let hasLastOfficial = false;
+//   let hasLastOfficialLed = false;
+
+//   let lastMessageId;
+//   if (!channel) {
+//     return {
+//       "totalOfficials": totalOfficials,
+//       "weeklyOfficials": weeklyOfficials,
+//       "lastOfficial": lastOfficial,
+//       "hasLastOfficial": hasLastOfficial,
+//       "totalOfficialsLed": totalOfficialsLed,
+//       "weeklyOfficialsLed": weeklyOfficialsLed,
+//       "lastOfficialLed": lastOfficialLed,
+//       "hasLastOfficialLed": hasLastOfficialLed
+//     } 
+//   }
+
+  
+//   while (true) {
+//     const options = { limit: 100 };
+    
+//     if (lastMessageId) {
+//       options.before = lastMessageId;
+//     }
+    
+//     if (memberCached) {
+//       options.after = member.client.officialVoyageCountCache.get(member.id).cacheDate;
+//     }
+    
+//     const messages = await channel.messages.fetch(options);
+//     if (!messages.size > 0) {
+//       break;
+//     }
+//     const pingedMessages = messages.filter(message => message.mentions.members.has(member.id));
+
+//     let pingedMessagesList = [];
+//     let pingedMessagesSentList = [];
+
+//     if(!lastOfficial) {
+//       for (let message of pingedMessages) {
+
+//         message = message[1];
+        
+//         pingedMessagesList.push(new Date(Date.now() - message.createdTimestamp));
+//       }
+
+//       if (pingedMessagesList.length > 0) {
+//         lastOfficial = pingedMessagesList[0];
+//         hasLastOfficial = true;
+//       }
+//     }
+
+//     if (!lastOfficialLed) {
+//       for (let message of pingedMessages.filter(message => message.author.id == member.id)) {
+
+//         message = message[1];
+        
+//         pingedMessagesSentList.push(new Date(Date.now() - message.createdTimestamp));
+//       }
+
+//       if (pingedMessagesSentList.length > 0) {
+//         lastOfficialLed = pingedMessagesSentList[0];
+//         hasLastOfficialLed = true;
+//       }
+//     }
+    
+//     totalOfficials += pingedMessages.size;
+    
+//     let pingedMessagesSent = pingedMessages.filter(message => message.author.id == member.id);
+//     totalOfficialsLed += pingedMessagesSent.size;
+
+//     const pingedMessageMonth = pingedMessages.filter(message => message.createdTimestamp > thirtyDaysAgo);
+//     weeklyOfficials += pingedMessageMonth.size;
+
+//     const pingedMessageSentMonth = pingedMessagesSent.filter(message => message.createdTimestamp > thirtyDaysAgo);
+//     weeklyOfficialsLed += pingedMessageSentMonth.size;
+
+//     if (messages.size > 0) {
+//       lastMessageId = messages.last().id;
+//     } else {
+//       break;
+//     }
+//   }
+
+//   weeklyOfficials = weeklyOfficials / 4; // Average the Officials per week this month
+//   weeklyOfficialsLed = weeklyOfficialsLed / 4;
+  
+//   updatedVoyageStats = {
+//     "totalOfficials": totalOfficials,
+//     "weeklyOfficials": weeklyOfficials,
+//     "lastOfficial": lastOfficial,
+//     "hasLastOfficial": hasLastOfficial,
+//     "totalOfficialsLed": totalOfficialsLed,
+//     "weeklyOfficialsLed": weeklyOfficialsLed,
+//     "lastOfficialLed": lastOfficialLed,
+//     "hasLastOfficialLed": hasLastOfficialLed
+//   }
+  
+//   logger.debug("Got here");
+//   // cacheMemberValues(member, {voyageStats: updatedVoyageStats});
+//   return updatedVoyageStats;
+// }
 
 function arrayContainsRegex(array, regex) {
   for (element of array) {
@@ -257,6 +339,10 @@ function getElementAddedOrRemovedFromTwoArrays(oldArray, newArray) {
   return { element: added ? added : removed, change: added ? "add" : (removed ? "remove" : "none") };
 }
 
+function cacheOfficialVoyageCountValues(member, values, date = Date.now()) {
+  member.client.officialVoyageCountCache.set(member.id, {voyageStats: values.voyageStats, cacheDate: date}, "members")
+}
+
 module.exports = {
   getAllRoles: getAllRoles,
   getAllRolesOfMember: getAllRolesOfMember,
@@ -266,14 +352,15 @@ module.exports = {
   getMemberFromUsername: getMemberFromUsername,
   millisecondsToDisplay: millisecondsToDisplay,
   getChannel: getChannel,
-  countOfficialVoyagesget: countOfficialVoyages,
   arrayContainsRegex: arrayContainsRegex,
   flipObjectKeyAndValues: flipObjectKeyAndValues, 
-  countOfficialVoyages: countOfficialVoyages,
+  cacheAllOfficialVoyageCounts: cacheAllOfficialVoyageCounts,
   getDepartments: getDepartments,
   getUsernamesFromIds: getUsernamesFromIds,
   getMentionsFromIds: getMentionsFromIds,
   combineTwoArraysOfSameLengthIntoStringsWithSeparator: combineTwoArraysOfSameLengthIntoStringsWithSeparator,
   getElementsUpToStringifiedLength: getElementsUpToStringifiedLength,
-  getElementAddedOrRemovedFromTwoArrays: getElementAddedOrRemovedFromTwoArrays
+  getElementAddedOrRemovedFromTwoArrays: getElementAddedOrRemovedFromTwoArrays,
+  cacheOfficialVoyageCountValues: cacheOfficialVoyageCountValues, 
+  cacheAllOfficialVoyageCounts: cacheAllOfficialVoyageCounts
 }
