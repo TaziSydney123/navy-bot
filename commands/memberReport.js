@@ -67,9 +67,14 @@ async function getMemberReportEmbed(member, interaction, multipleIndex = null, m
         ")"));
       roleChanges = helpers.getElementsUpToStringifiedLength(roleChanges.reverse(), 400);
     }
-
-    let fields = [
-      { name: 'User ID', value: member.id },
+    let fields = [];
+    if (!multipleIndex) {
+      fields.push(
+        { name: 'User ID', value: member.id }
+      )
+    }
+  
+    fields = fields.concat([ 
       // { name: '\u200B', value: '\u200B' },
       { name: 'Time in server', value: timeInServer, inline: true },
       { name: 'Immediate CO', value: immediateSuperiorId ? userMention(immediateSuperiorId) : "No CO Found", inline: true },
@@ -80,7 +85,7 @@ async function getMemberReportEmbed(member, interaction, multipleIndex = null, m
       // { name: 'Messages per Day', value: 'TODO' },
       // { name: 'Requirements for Next Promotion', value: 'TODO' },
       // { name: 'Available Awards', value: 'TODO' },
-    ];
+    ]);
     if (helpers.memberHasRole(member, interaction.client.settings.get(interaction.guild.id, "voyagePermissionsRole"))) {
       fields.push(
         { name: 'Last Ofcl. Voyage Hosted', value: lastVoyageLed, inline: true },
@@ -88,7 +93,7 @@ async function getMemberReportEmbed(member, interaction, multipleIndex = null, m
         { name: 'Total Ofcl. Voyages Hosted', value: voyageStats.totalOfficialsLed.toString(), inline: true }
       );
     }
-    if (memberCount == 1) {
+    if (!multipleIndex) {
       if (nameChanges) {
         fields.push(
           { name: 'Recent Name Changes', value: nameChanges.join("\n"), inline: false },
