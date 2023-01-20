@@ -14,6 +14,8 @@ const subordinateDatabaseClass = require("../subordinatesDatabase.js").Subordina
 
 const modalColor = 0x0099FF;
 
+const MAX_MEMBERS_BEFORE_NCO = 2;
+
 const memberReportCommand = new SlashCommandBuilder()
   .setName('member_report')
   .setDescription('Make a full report on a member')
@@ -119,7 +121,7 @@ async function getMemberReportEmbed(member, interaction, multipleIndex = null, l
       .setTimestamp();
 
   if (multipleIndex) {
-    memberEmbed.setFooter({ text: `${multipleIndex + 1} of ${lengthOfMultiple}` })
+    memberEmbed.setFooter({ text: `${parseInt(multipleIndex) + 1} of ${lengthOfMultiple}` })
   }
 
   return memberEmbed;
@@ -141,8 +143,9 @@ module.exports = {
           if (interaction.options.getMentionable("target").members.size == 0) {
             interaction.followUp("There are no members in that role.");
             return;
-          } else if (interaction.options.getMentionable("target").members.size >= 10 && !interaction.member.permissions.has(PermissionFlagsBits.CreatePrivateThreads)) {
+          } else if (interaction.options.getMentionable("target").members.size >= MAX_MEMBERS_BEFORE_NCO && !interaction.member.permissions.has(PermissionFlagsBits.CreatePrivateThreads)) {
             interaction.followUp("Currently only NCO and up can run this command (this is subject to change)")
+            return;
           }
           // if (interaction.options.getMentionable("target").members.length > interaction.client.settings.get("maximumMentionedMemberReport")) {
             
