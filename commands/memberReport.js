@@ -25,7 +25,7 @@ const memberReportCommand = new SlashCommandBuilder()
       .setDescription('The member to get a report on')
       .setRequired(false));
 
-async function getMemberReportEmbed(member, interaction, multipleIndex = null, lengthOfMultiple = null) {
+async function getMemberReportEmbed(member, interaction, multipleIndex = null, memberCount = null) {
     const timeInServer = helpers.millisecondsToDisplay((Date.now() - member.joinedTimestamp));
     let voyageStats = interaction.client.officialVoyageCountCache.get(member.guild.id, member.id);
     
@@ -88,22 +88,24 @@ async function getMemberReportEmbed(member, interaction, multipleIndex = null, l
         { name: 'Total Ofcl. Voyages Hosted', value: voyageStats.totalOfficialsLed.toString(), inline: true }
       );
     }
-    if (nameChanges) {
-      fields.push(
-        { name: 'Recent Name Changes', value: nameChanges.join("\n"), inline: false },
-      );
-    }
-    if (roleChanges) {
-      fields.push(
-        { name: 'Recent Role Changes', value: roleChanges.join("\n"), inline: false },
-      );
-    }
-    if (subordinateList.length > 0) {
-      fields.push({
-        name: 'Current Subordinates:',
-        value: helpers.getMentionsFromIds(subordinateList).join(", "),
-        inline: false
-      });
+    if (memberCount == 1) {
+      if (nameChanges) {
+        fields.push(
+          { name: 'Recent Name Changes', value: nameChanges.join("\n"), inline: false },
+        );
+      }
+      if (roleChanges) {
+        fields.push(
+          { name: 'Recent Role Changes', value: roleChanges.join("\n"), inline: false },
+        );
+      }
+      if (subordinateList.length > 0) {
+        fields.push({
+          name: 'Current Subordinates:',
+          value: helpers.getMentionsFromIds(subordinateList).join(", "),
+          inline: false
+        });
+      }
     }
     
     // fields.push({
@@ -121,7 +123,7 @@ async function getMemberReportEmbed(member, interaction, multipleIndex = null, l
       .setTimestamp();
 
   if (multipleIndex) {
-    memberEmbed.setFooter({ text: `${parseInt(multipleIndex) + 1} of ${lengthOfMultiple}` })
+    memberEmbed.setFooter({ text: `${parseInt(multipleIndex) + 1} of ${memberCount}` })
   }
 
   return memberEmbed;
@@ -141,10 +143,10 @@ module.exports = {
       if (interaction.options.getMentionable("target")) {
         if (interaction.options.getMentionable("target").members) {
           if (interaction.options.getMentionable("target").members.size == 0) {
-            interaction.followUp("There are no members in that role.");
+            interaction.followUp("No members have that role");
             return;
           } else if (interaction.options.getMentionable("target").members.size >= MAX_MEMBERS_BEFORE_NCO && !interaction.member.permissions.has(PermissionFlagsBits.CreatePrivateThreads)) {
-            interaction.followUp("Currently only NCO and up can run this command for more than " + MAX_MEMBERS_BEFORE_NCO + " members (this is subject to change)")
+            interaction.followUp("You do not have permission to run this commnd for more than " + MAX_MEMBERS_BEFORE_NCO + " members")
             return;
           }
           // if (interaction.options.getMentionable("target").members.length > interaction.client.settings.get("maximumMentionedMemberReport")) {
