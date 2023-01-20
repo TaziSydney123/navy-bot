@@ -71,7 +71,6 @@ function millisecondsToDisplay(ms, relative = false) {
 
 async function getChannel(guild, name) {
   let channels = await guild.channels.fetch();
-  logger.debug("name input: " + name);
   for (let channel of channels.values()) {
     if (channel.name.includes(name)) {
       return channel;
@@ -80,7 +79,7 @@ async function getChannel(guild, name) {
 }
 
 async function cacheAllOfficialVoyageCounts(channel) {
-  const thirtyDays = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
   let lastMessageId
     
@@ -101,7 +100,7 @@ async function cacheAllOfficialVoyageCounts(channel) {
     if (!messages.size > 0) {
       break;
     }
-    
+
     for (let data of messages.map(message => ({pingedMembers: message.mentions.members, message: message}))) {
       for (let pingedMember of data.pingedMembers) {
         pingedMember = pingedMember[0];
@@ -109,11 +108,11 @@ async function cacheAllOfficialVoyageCounts(channel) {
           const currentVoyageStats = userVoyageStats[pingedMember];
           userVoyageStats[pingedMember] = {
            totalOfficials: currentVoyageStats.totalOfficials + 1,
-           weeklyOfficials: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? ((currentVoyageStats.weeklyOfficials * 4) + 1) / 4 : currentVoyageStats.weeklyOfficials,
+           weeklyOfficials: data.message.createdTimestamp >= thirtyDaysAgo ? currentVoyageStats.weeklyOfficials + 0.25 : currentVoyageStats.weeklyOfficials,
            lastOfficial: currentVoyageStats.lastOfficial,
            totalOfficialsLed: (data.message.author.id == pingedMember ? (currentVoyageStats.totalOfficialsLed + 1) : currentVoyageStats.totalOfficialsLed),
-           weeklyOfficialsLed: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? (data.message.author.id == pingedMember ? (((currentVoyageStats.weeklyOfficialsLed * 4) + 1) / 4) : currentVoyageStats.weeklyOfficialsLed) : currentVoyageStats.weeklyOfficialsLed,
-           lastOfficialLed: !currentVoyageStats.hasLastOfficialLed ? (data.message.author.id == pingedMember ? new Date(Date.now() - data.message.createdTimestamp) : currentVoyageStats.lastOfficialLed) : currentVoyageStats.lastOfficialLed,
+           weeklyOfficialsLed: data.message.createdTimestamp >= thirtyDaysAgo ? (data.message.author.id == pingedMember ? (currentVoyageStats.weeklyOfficialsLed + 0.25) : currentVoyageStats.weeklyOfficialsLed) : currentVoyageStats.weeklyOfficialsLed,
+           lastOfficialLed: !currentVoyageStats.hasLastOfficialLed ? (data.message.author.id == pingedMember ? Date.now() - data.message.createdTimestamp : currentVoyageStats.lastOfficialLed) : currentVoyageStats.lastOfficialLed,
           
            hasLastOfficial: true,
            hasLastOfficialLed: !currentVoyageStats.hasLastOfficialLed ? (data.message.author.id == pingedMember ? true : currentVoyageStats.lastOfficialLed) : currentVoyageStats.lastOfficialLed
@@ -121,11 +120,11 @@ async function cacheAllOfficialVoyageCounts(channel) {
         } else {
           userVoyageStats[pingedMember] = {
            totalOfficials: 1,
-           weeklyOfficials: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? 1 / 4 : 0,
-           lastOfficial: new Date(Date.now() - data.message.createdTimestamp),
+           weeklyOfficials: data.message.createdTimestamp >= thirtyDaysAgo ? 0.25 : 0,
+           lastOfficial: Date.now() - data.message.createdTimestamp,
            totalOfficialsLed: (data.message.author.id == pingedMember ? 1 : 0),
-           weeklyOfficialsLed: new Date(Date.now() - data.message.createdTimestamp) <= thirtyDays ? (data.message.author.id == pingedMember ? 1 / 4 : 0) : 0,
-           lastOfficialLed: (data.message.author.id == pingedMember) ? new Date(Date.now() - data.message.createdTimestamp) : null,
+           weeklyOfficialsLed: data.message.createdTimestamp >= thirtyDaysAgo ? (data.message.author.id == pingedMember ? 0.25 : 0) : 0,
+           lastOfficialLed: (data.message.author.id == pingedMember) ? Date.now() - data.message.createdTimestamp : null,
           
            hasLastOfficial: true,
            hasLastOfficialLed: (data.message.author.id == pingedMember) ? true : false
@@ -142,7 +141,6 @@ async function cacheAllOfficialVoyageCounts(channel) {
   }
   console.log("Stats: " + userVoyageStats)
   channel.client.officialVoyageCountCache.set(channel.guild.id, userVoyageStats);
-  logger.debug(channel.client.officialVoyageCountCache.get(""))
   return true;
 }
 

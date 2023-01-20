@@ -17,35 +17,17 @@ const modalColor = 0x0099FF;
 const memberReportCommand = new SlashCommandBuilder()
   .setName('member_report')
   .setDescription('Make a full report on a member')
-  .addUserOption(option =>
+  .addMentionableOption(option =>
     option
-      .setName('member')
+      .setName('target')
       .setDescription('The member to get a report on')
-      .setRequired(false))
+      .setRequired(false));
 
-module.exports = {
-  data: memberReportCommand,
-  async execute(interaction) {
-    // TODO: (ancientbison) Get defer to work.
-    await interaction.deferReply({ ephemeral: false });
-
-    let member = null;
-
-    try {
-      if (interaction.options.getUser("member")) {
-        member = await interaction.guild.members.fetch(interaction.options.getUser("member").id);
-      } else {
-        member = interaction.member;
-      }
-    } catch {
-      interaction.followUp("That member does not exist in the server");
-      return;
-    }
-
+async function getMemberReportEmbed(member, interaction, multipleIndex = null, lengthOfMultiple = null) {
     const timeInServer = helpers.millisecondsToDisplay((Date.now() - member.joinedTimestamp));
-    const logbookChannel = await helpers.getChannel(interaction.guild, interaction.client.settings.get(interaction.guild.id, "voyageLogbookChannel"))
-    const voyageStats = member.client.officialVoyageCountCache.get(member.guild.id, member.id);
-    if (!voyageStats) {
+    let voyageStats = interaction.client.officialVoyageCountCache.get(member.guild.id, member.id);
+    
+  if (!voyageStats) {
       voyageStats = {
         totalOfficials: 0,
         weeklyOfficials: 0,
@@ -58,6 +40,7 @@ module.exports = {
         hasLastOfficialLed: false,
       };
     }
+  
     const lastVoyage = voyageStats.hasLastOfficial ? helpers.millisecondsToDisplay(voyageStats.lastOfficial, true) : "None"
     const lastVoyageLed = voyageStats.hasLastOfficialLed ? helpers.millisecondsToDisplay(voyageStats.lastOfficialLed, true) : "None"
     const departments = await helpers.getDepartments(member);
@@ -135,6 +118,54 @@ module.exports = {
       .addFields(fields)
       .setTimestamp();
 
-    await interaction.followUp({ embeds: [memberEmbed] });
+  if (multipleIndex) {
+    memberEmbed.setFooter({ text: `${multipleIndex} of ${lengthOfMultiple}` })
   }
+
+  return memberEmbed;
+}
+
+module.exports = {
+  data: memberReportCommand,
+  async execute(interaction) {
+    // TODO: (ancientbison) Get defer to work.
+    await interaction.deferReply({ ephemeral: false });
+
+    let members = [];
+
+    let multiple = false;
+
+    try {
+      if (interaction.options.getMentionable("target")) {
+        if (interaction.options.getMentionable("target").members) {
+          if (interaction.options.getMentionable("target").members.size == 0) {
+            interaction.followUp("There are no members in that role.");
+            return;
+          }
+          // if (interaction.options.getMentionable("target").members.length > interaction.client.settings.get("maximumMentionedMemberReport")) {
+            
+          // }
+          
+          members = Array.from(interaction.options.getMentionable("target").members.values());
+
+          multiple = true;
+        } else {
+          members.push(await interaction.guild.members.fetch(interaction.options.getMentionable("target").id));
+        }
+      } else {
+        members.push(interaction.member);
+      }
+    } catch {
+      interaction.followUp(interaction.options.getMentionable("target") + " does not exist in the server");
+      return;
+    }
+
+    for (index in members) {
+      if (multiple) {
+        await interaction.followUp({ embeds: [await getMemberReportEmbed(members[index], interaction, index, members.length)] });
+      } else {
+        await interaction.followUp({ embeds: [await getMemberReportEmbed(members[index], interaction)] });
+      }
+    }
+  }    
 }

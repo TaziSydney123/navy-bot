@@ -155,7 +155,7 @@ client.on(Events.ClientReady, (client) => {
 });
 
 client.on(Events.GuildMemberRemove, async (member) => {
-  if (member.id == client.id) {
+  if (member.id == client.user.id) {
     return;
   }
   
